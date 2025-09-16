@@ -141,7 +141,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\for-git\\tip-calc-back\\generated\\prisma",
+      "value": "/Users/mikhaylokopylets/Documents/GitHub/tip-calc-back/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -150,16 +150,16 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "windows",
+        "value": "darwin",
         "native": true
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\for-git\\tip-calc-back\\prisma\\schema.prisma",
+    "sourceFilePath": "/Users/mikhaylokopylets/Documents/GitHub/tip-calc-back/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../.env",
+    "rootEnvPath": null,
     "schemaEnvPath": "../../.env"
   },
   "relativePath": "../../prisma",
@@ -169,7 +169,6 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
