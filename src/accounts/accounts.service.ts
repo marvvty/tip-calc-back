@@ -60,9 +60,7 @@ export class AccountsService {
     const participants = accounts.participants.map((participant) => {
       let share: number;
 
-      if (participant.custom_amount != null) {
-        share = Number(participant.custom_amount);
-      } else if (participant.custom_precent != null) {
+      if (participant.custom_precent != null) {
         share = total * (participant.custom_precent / 100);
       } else {
         share = total / peopleCount;
