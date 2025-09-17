@@ -32,12 +32,19 @@ export class AccountsService {
   }
 
   async update(id: number, data: UpdateAccountDto) {
+    await this.prisma.participants.deleteMany({
+      where: { accounts: { id } },
+    });
+
     return this.prisma.accounts.update({
       where: { id },
       data: {
         base_amount: data.base_amount,
         tip_precent: data.tip_precent,
         people_count: data.people_count,
+        participants: {
+          create: data.participants || [],
+        },
       },
       include: { participants: true },
     });
@@ -55,20 +62,84 @@ export class AccountsService {
     const tipPercent = accounts.tip_precent || 0;
     const tipAmount = base * (tipPercent / 100);
     const total = base + tipAmount;
-    const peopleCount = accounts.people_count || accounts.participants.length;
 
-    const participants = accounts.participants.map((participant) => {
-      let share: number;
-
-      if (participant.custom_precent != null) {
-        share = total * (participant.custom_precent / 100);
-      } else {
-        share = total / peopleCount;
-      }
-
-      return { participant, calculated_share: share };
-    });
+    const normalizedPercentages = this.calculateNormalizedPercentages(
+      accounts.participants,
+    );
+    const participants = this.calculateParticipantShares(
+      accounts.participants,
+      total,
+      normalizedPercentages,
+    );
 
     return { tipAmount, total, participants };
+  }
+
+  private calculateNormalizedPercentages(
+    participants: any[],
+  ): Map<number, number> {
+    const customPercentages = new Map<number, number>();
+    let totalCustomPercent = 0;
+    let customCount = 0;
+
+    participants.forEach((p, index) => {
+      if (p.custom_precent != null) {
+        customPercentages.set(index, p.custom_precent);
+        totalCustomPercent += p.custom_precent;
+        customCount++;
+      }
+    });
+
+    const remainingParticipants = participants.length - customCount;
+    const normalizedPercentages = new Map<number, number>();
+
+    if (remainingParticipants > 0) {
+      const defaultPercent = Math.max(
+        0,
+        (100 - totalCustomPercent) / remainingParticipants,
+      );
+
+      participants.forEach((p, index) => {
+        if (p.custom_precent == null) {
+          normalizedPercentages.set(index, defaultPercent);
+        }
+      });
+
+      totalCustomPercent = 100;
+    }
+
+    const normalizationFactor =
+      totalCustomPercent > 100 ? 100 / totalCustomPercent : 1;
+
+    participants.forEach((p, index) => {
+      if (p.custom_precent != null) {
+        normalizedPercentages.set(
+          index,
+          p.custom_precent * normalizationFactor,
+        );
+      } else if (normalizedPercentages.has(index)) {
+        const currentPercent = normalizedPercentages.get(index)!;
+        normalizedPercentages.set(index, currentPercent * normalizationFactor);
+      }
+    });
+
+    return normalizedPercentages;
+  }
+
+  private calculateParticipantShares(
+    participants: any[],
+    total: number,
+    normalizedPercentages: Map<number, number>,
+  ) {
+    return participants.map((participant, index) => {
+      const percentage =
+        normalizedPercentages.get(index) || 100 / participants.length;
+      const share = total * (percentage / 100);
+
+      return {
+        participant,
+        calculated_share: share,
+      };
+    });
   }
 }
